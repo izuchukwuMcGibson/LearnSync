@@ -11,7 +11,18 @@ model User {
   email     String   @unique
   name      String
   createdAt DateTime @default(now())
-  password  String   
+  password  String
+  notes     Note[]
 }
 
-
+model Note {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  fileName  String
+  topic     String
+  content   String
+  summary   String?
+  keyPoints Json?
+  createdAt DateTime @default(now())
+}
