@@ -16,13 +16,57 @@ model User {
 }
 
 model Note {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  fileName     String
+  topic        String
+  content      String
+  summary      String?
+  keyPoints    Json?
+  createdAt    DateTime      @default(now())
+  quizzes      Quiz[]
+  noteAnalysis NoteAnalysis?
+}
+
+model Quiz {
+  id         String    @id @default(uuid())
+  noteId     String
+  note       Note      @relation(fields: [noteId], references: [id])
+  questions  Json
+  difficulty String
+  round      Int
+  createdAt  DateTime  @default(now())
+  attempts   Attempt[]
+}
+
+model Attempt {
   id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  fileName  String
-  topic     String
-  content   String
-  summary   String?
-  keyPoints Json?
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id])
+  score     Int
+  passed    Boolean
   createdAt DateTime @default(now())
+}
+
+model NoteAnalysis {
+  id        String     @id @default(uuid())
+  noteId    String     @unique
+  note      Note       @relation(fields: [noteId], references: [id])
+  summary   String
+  isRead    Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  keyPoints KeyPoint[]
+}
+
+model KeyPoint {
+  id           String       @id @default(uuid())
+  analysisId   String
+  analysis     NoteAnalysis @relation(fields: [analysisId], references: [id])
+  concept      String
+  explanation  String
+  reviewCount  Int          @default(0)
+  lastReviewed DateTime?
+  mastered     Boolean      @default(false)
+  createdAt    DateTime     @default(now())
 }
