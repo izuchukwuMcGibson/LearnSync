@@ -6,7 +6,7 @@ import { isAuthenticated } from "../middlewares/isAuthenticated.js";
 
 const router = Router();
 router.post("/upload", isAuthenticated, uploadNote, saveNote);
-router.get("/notes/:userId", isAuthenticated, getNotes);
+router.get("/get-notes/:userId", isAuthenticated, getNotes);
 router.get("/get-note/:noteId", isAuthenticated, getNoteById);
 router.delete("/delete-note/:noteId", isAuthenticated, deleteNote);
 
