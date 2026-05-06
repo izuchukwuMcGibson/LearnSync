@@ -32,7 +32,7 @@ model Note {
 model Quiz {
   id         String    @id @default(uuid())
   noteId     String
-  note       Note      @relation(fields: [noteId], references: [id])
+  note       Note      @relation(fields: [noteId], references: [id], onDelete: Cascade)
   questions  Json
   difficulty String
   round      Int
@@ -43,7 +43,7 @@ model Quiz {
 model Attempt {
   id        String   @id @default(uuid())
   quizId    String
-  quiz      Quiz     @relation(fields: [quizId], references: [id])
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   score     Int
   passed    Boolean
   createdAt DateTime @default(now())
@@ -52,7 +52,7 @@ model Attempt {
 model NoteAnalysis {
   id        String     @id @default(uuid())
   noteId    String     @unique
-  note      Note       @relation(fields: [noteId], references: [id])
+  note      Note       @relation(fields: [noteId], references: [id], onDelete: Cascade)
   summary   String
   isRead    Boolean    @default(false)
   createdAt DateTime   @default(now())
@@ -62,7 +62,7 @@ model NoteAnalysis {
 model KeyPoint {
   id           String       @id @default(uuid())
   analysisId   String
-  analysis     NoteAnalysis @relation(fields: [analysisId], references: [id])
+  analysis     NoteAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
   concept      String
   explanation  String
   reviewCount  Int          @default(0)

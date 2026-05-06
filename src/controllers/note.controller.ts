@@ -133,10 +133,13 @@ export const deleteNote = async (
 ) => {
   const { noteId } = req.params;
   try {
-    const note = await prisma.note.delete({ where: { id: noteId } });
-    if (!note) {
+    const noteExists = await prisma.note.findUnique({ where: { id: noteId } });
+    if (!noteExists) {
       return res.status(404).json({ error: "Note not found" });
     }
+
+    await prisma.note.delete({ where: { id: noteId } });
+
     return res.status(200).json({ message: "Note deleted successfully" });
   } catch (error) {
     console.error("Error occurred while deleting note:", error);
