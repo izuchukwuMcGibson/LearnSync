@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import type { Express } from "express";
+import cors from "cors";
 import userRoute from "./routes/user.routes.js";
 import noteRoute from "./routes/note.routes.js";
 import summaryRoute from "./routes/summary.routes.js";
@@ -10,6 +11,18 @@ import cookieParser from "cookie-parser";
 
 const app: Express = express();
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173", // Example local frontend (Vite)
+  process.env.FRONTEND_URL || "", // Add your production URL to your .env
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  }),
+);
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
