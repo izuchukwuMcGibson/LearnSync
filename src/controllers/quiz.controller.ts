@@ -141,7 +141,7 @@ const generateQuizFromNote = async (
   const prompt = buildQuizPrompt(trimmedContent, difficulty);
 
   const response = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" +
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" +
       apiKey,
     {
       method: "POST",

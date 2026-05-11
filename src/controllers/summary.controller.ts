@@ -112,7 +112,7 @@ export const generateSummary = async (
     const prompt = buildSummaryPrompt(trimmedContent);
 
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" +
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" +
         apiKey,
       {
         method: "POST",
@@ -121,7 +121,7 @@ export const generateSummary = async (
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 1200,
+            maxOutputTokens: 2500,
             responseMimeType: "application/json",
           },
         }),
