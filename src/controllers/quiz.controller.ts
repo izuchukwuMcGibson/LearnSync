@@ -150,7 +150,7 @@ const generateQuizFromNote = async (
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.4,
-          maxOutputTokens: 2200,
+          maxOutputTokens: 4000,
           responseMimeType: "application/json",
         },
       }),

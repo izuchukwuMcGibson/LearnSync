@@ -215,30 +215,36 @@ export const generateSummary = async (
     const summary = parsed.summary;
     const keyPoints = parsed.keyPoints;
 
-    const result = await prisma.$transaction(async (tx) => {
-      await tx.note.update({
-        where: { id: noteId },
-        data: { summary },
-      });
+    const result = await prisma.$transaction(
+      async (tx) => {
+        await tx.note.update({
+          where: { id: noteId },
+          data: { summary },
+        });
 
-      const analysis = await tx.noteAnalysis.upsert({
-        where: { noteId },
-        update: { summary },
-        create: { noteId, summary },
-      });
+        const analysis = await tx.noteAnalysis.upsert({
+          where: { noteId },
+          update: { summary },
+          create: { noteId, summary },
+        });
 
-      await tx.keyPoint.deleteMany({ where: { analysisId: analysis.id } });
+        await tx.keyPoint.deleteMany({ where: { analysisId: analysis.id } });
 
-      await tx.keyPoint.createMany({
-        data: keyPoints.map((point) => ({
-          analysisId: analysis.id,
-          concept: point.concept,
-          explanation: point.explanation,
-        })),
-      });
+        await tx.keyPoint.createMany({
+          data: keyPoints.map((point) => ({
+            analysisId: analysis.id,
+            concept: point.concept,
+            explanation: point.explanation,
+          })),
+        });
 
-      return analysis;
-    });
+        return analysis;
+      },
+      {
+        maxWait: 15000,
+        timeout: 20000,
+      },
+    );
 
     return res.status(200).json({ noteId: result.noteId, summary, keyPoints });
   } catch (error) {
