@@ -246,3 +246,53 @@ export const generateSummary = async (
     return res.status(500).json({ error: "Failed to generate summary" });
   }
 };
+
+export const getSummaryByNoteId = async (
+  noteId: string,
+): Promise<{ summary: string; keyPoints: KeyPointPayload[] } | null> => {
+  const analysis = await prisma.noteAnalysis.findUnique({
+    where: { noteId },
+    select: {
+      summary: true,
+      keyPoints: {
+        select: {
+          concept: true,
+          explanation: true,
+        },
+      },
+    },
+  });
+
+  if (!analysis || !analysis.summary) return null;
+
+  return {
+    summary: analysis.summary,
+    keyPoints: analysis.keyPoints,
+  };
+};
+
+export const getSummary = async (
+  req: Request<{ noteId: string }>,
+  res: Response,
+) => {
+  const { noteId } = req.params;
+
+  if (!noteId) {
+    return res.status(400).json({ error: "noteId is required" });
+  }
+
+  try {
+    const data = await getSummaryByNoteId(noteId);
+
+    if (!data) {
+      return res
+        .status(404)
+        .json({ error: "Summary not found for this note." });
+    }
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error fetching summary:", error);
+    return res.status(500).json({ error: "Failed to fetch summary" });
+  }
+};
