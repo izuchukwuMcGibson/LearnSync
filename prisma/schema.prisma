@@ -45,7 +45,6 @@ model Attempt {
   quizId    String
   quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   score     Int
-  passed    Boolean
   createdAt DateTime @default(now())
 }
 

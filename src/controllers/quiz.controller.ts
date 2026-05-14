@@ -295,3 +295,39 @@ export const generateQuiz = async (
     return res.status(500).json({ error: "Failed to generate quiz" });
   }
 };
+
+export const submitQuizScore = async (
+  req: Request<{ quizId: string }, {}, { score: number }>,
+  res: Response,
+) => {
+  const { quizId } = req.params;
+  const { score } = req.body;
+
+  if (typeof score !== "number") {
+    return res.status(400).json({ error: "score must be a number" });
+  }
+
+  try {
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+    });
+
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+
+    const attempt = await prisma.attempt.create({
+      data: {
+        quizId,
+        score,
+      },
+    });
+
+    return res
+      .status(201)
+      .json({ message: "Score submitted successfully", attempt });
+  } catch (error) {
+    console.error("Error occurred while submitting quiz score:", error);
+    return res.status(500).json({ error: "Failed to submit quiz score" });
+  }
+};
