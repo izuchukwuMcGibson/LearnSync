@@ -255,7 +255,12 @@ export const generateSummary = async (
 
 export const getSummaryByNoteId = async (
   noteId: string,
-): Promise<{ summary: string; keyPoints: KeyPointPayload[] } | null> => {
+): Promise<{
+  summary: string;
+  keyPoints: KeyPointPayload[];
+  averageScore: number;
+  quizAttempts: number;
+} | null> => {
   const analysis = await prisma.noteAnalysis.findUnique({
     where: { noteId },
     select: {
@@ -271,9 +276,28 @@ export const getSummaryByNoteId = async (
 
   if (!analysis || !analysis.summary) return null;
 
+  const attemptsAggregate = await prisma.attempt.aggregate({
+    where: {
+      quiz: {
+        noteId: noteId,
+      },
+    },
+    _count: {
+      _all: true,
+    },
+    _avg: {
+      score: true,
+    },
+  });
+
+  const quizAttempts = attemptsAggregate._count._all;
+  const averageScore = Math.round(attemptsAggregate._avg.score || 0);
+
   return {
     summary: analysis.summary,
     keyPoints: analysis.keyPoints,
+    averageScore,
+    quizAttempts,
   };
 };
 
