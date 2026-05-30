@@ -31,6 +31,8 @@ app.use("/api/notes", noteRoute);
 app.use("/api/summary", summaryRoute);
 app.use("/api/quiz", quizRoute);
 
-app.listen(3000, (): void => {
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, (): void => {
   console.log("Server is running on port 3000");
 });
