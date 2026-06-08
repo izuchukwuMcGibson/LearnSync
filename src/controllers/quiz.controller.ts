@@ -17,14 +17,28 @@ type ErrorResponse = {
 
 type DifficultyLevel = "easy-medium" | "medium-hard";
 
-type QuizQuestion = {
+type MCQQuestion = {
   id: number;
+  type: "mcq";
   question: string;
   options: { A: string; B: string; C: string; D: string };
   correctAnswer: "A" | "B" | "C" | "D";
   explanation: string;
   difficulty: "easy" | "medium" | "hard";
 };
+
+type CodeQuestion = {
+  id: number;
+  type: "code";
+  question: string;
+  starterCode: string;
+  language: string;
+  expectedOutput: string;
+  explanation: string;
+  difficulty: "easy" | "medium" | "hard";
+};
+
+type QuizQuestion = MCQQuestion | CodeQuestion;
 
 type GenerateQuizResponse = {
   quizId: string;
@@ -53,7 +67,7 @@ const normalizeGeminiJson = (input: string): string => {
   return input
     .replace(/,\s*(\}|\])/g, "$1")
     .replace(
-      /([{,]\s*)(difficulty|questions|id|question|options|correctAnswer|explanation)\s*:/g,
+      /([{,]\s*)(difficulty|questions|id|type|question|options|correctAnswer|explanation|starterCode|language|expectedOutput)\s*:/g,
       '$1"$2":',
     )
     .replace(/'([^']*)'/g, '"$1"');
@@ -80,7 +94,7 @@ export const buildQuizPrompt = (
 You are a computer science quiz generator for an adaptive learning system.
 
 A student has just read their study notes and is now being tested on their understanding.
-Your job is to generate exactly 10 multiple choice questions based strictly on the notes provided.
+Your job is to generate exactly 10 questions based strictly on the notes provided.
 
 DIFFICULTY LEVEL: ${
     difficulty === "easy-medium"
@@ -91,11 +105,15 @@ DIFFICULTY LEVEL: ${
 DIFFICULTY BREAKDOWN:
 ${difficultyGuide}
 
+QUESTION TYPES:
+- If the notes contain programming or code-related content, include 2 to 3 code questions where the student must write or complete a piece of code. The remaining questions should be multiple choice.
+- If the notes do not contain programming content, all 10 questions must be multiple choice.
+- Multiple choice questions must have exactly 4 options labeled A, B, C, D with one correct answer.
+- Code questions must include a clear instruction, a starter code scaffold (or empty string if not needed), the expected output, and the programming language.
+
 STRICT RULES:
 - Respond with valid JSON only. No extra text, no markdown, no code blocks.
-- Generate exactly 10 multiple choice questions — no more, no less.
-- Each question must have exactly 4 options labeled A, B, C, D.
-- Only one option must be correct per question.
+- Generate exactly 10 questions — no more, no less.
 - Base every question strictly on the content of the notes. Do not fabricate or go outside the notes.
 - Distractors (wrong answers) must be plausible and relevant — not obviously wrong.
 - Do not repeat similar questions.
@@ -108,6 +126,7 @@ RESPONSE FORMAT:
   "questions": [
     {
       "id": 1,
+      "type": "mcq",
       "question": "string",
       "options": {
         "A": "string",
@@ -118,13 +137,23 @@ RESPONSE FORMAT:
       "correctAnswer": "A" | "B" | "C" | "D",
       "explanation": "string",
       "difficulty": "easy" | "medium" | "hard"
+    },
+    {
+      "id": 2,
+      "type": "code",
+      "question": "string — what the student should write or complete",
+      "starterCode": "string — partial code scaffold or empty string",
+      "language": "string — e.g. python, javascript, java, c++",
+      "expectedOutput": "string — exact output the code should print when correct",
+      "explanation": "string — shown after the student submits",
+      "difficulty": "easy" | "medium" | "hard"
     }
   ]
 }
 
 STUDENT NOTES:
 ${extractedText}
-	`.trim();
+  `.trim();
 };
 
 const generateQuizFromNote = async (
