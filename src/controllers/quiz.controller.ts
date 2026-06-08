@@ -32,6 +32,7 @@ type CodeQuestion = {
   type: "code";
   question: string;
   starterCode: string;
+  testCode: string; // Hidden code appended during execution to test the student's solution
   language: string;
   expectedOutput: string;
   explanation: string;
@@ -67,7 +68,7 @@ const normalizeGeminiJson = (input: string): string => {
   return input
     .replace(/,\s*(\}|\])/g, "$1")
     .replace(
-      /([{,]\s*)(difficulty|questions|id|type|question|options|correctAnswer|explanation|starterCode|language|expectedOutput)\s*:/g,
+      /([{,]\s*)(difficulty|questions|id|type|question|options|correctAnswer|explanation|starterCode|testCode|language|expectedOutput)\s*:/g,
       '$1"$2":',
     )
     .replace(/'([^']*)'/g, '"$1"');
@@ -109,7 +110,11 @@ QUESTION TYPES:
 - If the notes contain programming or code-related content, include 2 to 3 code questions where the student must write or complete a piece of code. The remaining questions should be multiple choice.
 - If the notes do not contain programming content, all 10 questions must be multiple choice.
 - Multiple choice questions must have exactly 4 options labeled A, B, C, D with one correct answer.
-- Code questions must include a clear instruction, a starter code scaffold (or empty string if not needed), the expected output, and the programming language.
+- Code questions must include: 
+    1. A clear instruction.
+    2. A starter code scaffold (just the function definition or empty string).
+    3. Hidden test code (e.g. console.log(add(2,3))) that will be appended during execution to verify their function.
+    4. The expected output that exactly matches what the hidden test code will print.
 
 STRICT RULES:
 - Respond with valid JSON only. No extra text, no markdown, no code blocks.
@@ -142,9 +147,10 @@ RESPONSE FORMAT:
       "id": 2,
       "type": "code",
       "question": "string — what the student should write or complete",
-      "starterCode": "string — partial code scaffold or empty string",
+      "starterCode": "string — code scaffold shown to student (e.g., function signature). DO NOT put test cases or prints here.",
+      "testCode": "string — hidden test code that calls the student's function and prints the result (e.g., console.log(add(2,3)))",
       "language": "string — e.g. python, javascript, java, c++",
-      "expectedOutput": "string — exact output the code should print when correct",
+      "expectedOutput": "string — exact output the testCode will print over standard output",
       "explanation": "string — shown after the student submits",
       "difficulty": "easy" | "medium" | "hard"
     }
