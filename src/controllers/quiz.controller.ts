@@ -111,10 +111,10 @@ QUESTION TYPES:
 - If the notes do not contain programming content, all 10 questions must be multiple choice.
 - Multiple choice questions must have exactly 4 options labeled A, B, C, D with one correct answer.
 - Code questions must include: 
-    1. A clear instruction.
-    2. A starter code scaffold (just the function definition or empty string).
-    3. Hidden test code (e.g. console.log(add(2,3))) that will be appended during execution to verify their function.
-    4. The expected output that exactly matches what the hidden test code will print.
+    1. A clear instruction detailing a specific function name to implement.
+    2. A starter code scaffold consisting ONLY of the functional declaration signature block.
+    3. The primary programming language string (e.g., javascript, python).
+    4. An array of test cases. Each test case MUST explicitly state the literal string snippet that invokes the function (e.g. "doubleNumbers([1, 2, 3])") and the exact literal data structure value it evaluates to (e.g. "[2, 4, 6]").
 
 STRICT RULES:
 - Respond with valid JSON only. No extra text, no markdown, no code blocks.
@@ -124,6 +124,9 @@ STRICT RULES:
 - Do not repeat similar questions.
 - Keep language clear and student friendly.
 - Include a brief explanation for the correct answer to aid learning.
+
+CRITICAL REQUIREMENT FOR CODE QUESTIONS:
+You must guarantee absolute cohesion between test case invocations and the target expected return value. Do not guess outputs. Double-check that your expected string exactly mirrors what the invocation creates mathematically.
 
 RESPONSE FORMAT:
 {
@@ -146,12 +149,20 @@ RESPONSE FORMAT:
     {
       "id": 2,
       "type": "code",
-      "question": "string — what the student should write or complete",
-      "starterCode": "string — code scaffold shown to student (e.g., function signature). DO NOT put test cases or prints here.",
-      "testCode": "string — hidden test code that calls the student's function and prints the result (e.g., console.log(add(2,3)))",
-      "language": "string — e.g. python, javascript, java, c++",
-      "expectedOutput": "string — exact output the testCode will print over standard output",
-      "explanation": "string — shown after the student submits",
+      "question": "string — clear prompt explaining requirements and naming expectations.",
+      "starterCode": "string — functional declaration outline shown to the user.",
+      "language": "javascript" | "python",
+      "testCases": [
+        {
+          "invocation": "doubleNumbers([1, 2, 3])",
+          "expected": "[2, 4, 6]"
+        },
+        {
+          "invocation": "doubleNumbers([5, 10])",
+          "expected": "[10, 20]"
+        }
+      ],
+      "explanation": "string — conceptual summary description",
       "difficulty": "easy" | "medium" | "hard"
     }
   ]
