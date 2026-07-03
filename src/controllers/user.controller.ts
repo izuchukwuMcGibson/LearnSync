@@ -47,7 +47,7 @@ export const register = async (
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const token = jwt.sign({ email }, process.env.JWT_SECRET!, {
-      expiresIn: "1d",
+      expiresIn: "1h",
     });
     const newUser = await prisma.user.create({
       data: { name, email, password: hashedPassword },
@@ -56,7 +56,7 @@ export const register = async (
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 86400000, // 1 day
+      maxAge: 3600000, // 1 hour
     });
     return res
       .status(201)
