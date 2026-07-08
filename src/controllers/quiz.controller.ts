@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { normalizeGeminiJson, parseGeminiResponse } from "../utils/gemini.js";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -62,16 +63,6 @@ type GeminiCandidate = {
 
 type GeminiResponse = {
   candidates?: GeminiCandidate[];
-};
-
-const normalizeGeminiJson = (input: string): string => {
-  return input
-    .replace(/,\s*(\}|\])/g, "$1")
-    .replace(
-      /([{,]\s*)(difficulty|questions|id|type|question|options|correctAnswer|explanation|starterCode|testCode|language|expectedOutput)\s*:/g,
-      '$1"$2":',
-    )
-    .replace(/'([^']*)'/g, '"$1"');
 };
 
 export const buildQuizPrompt = (
@@ -243,10 +234,10 @@ const generateQuizFromNote = async (
   const jsonText = jsonMatch ? jsonMatch[0] : cleanedText;
 
   try {
-    return JSON.parse(jsonText) as QuizPayload;
+    return parseGeminiResponse<QuizPayload>(jsonText);
   } catch {
     const normalized = normalizeGeminiJson(jsonText);
-    return JSON.parse(normalized) as QuizPayload;
+    return parseGeminiResponse<QuizPayload>(normalized);
   }
 };
 

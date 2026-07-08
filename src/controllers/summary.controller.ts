@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { normalizeGeminiJson, parseGeminiResponse } from "../utils/gemini.js";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -35,16 +36,6 @@ type GeminiResponse = {
   candidates?: GeminiCandidate[];
 };
 
-const normalizeGeminiJson = (input: string): string => {
-  return input
-    .replace(/,\s*(\}|\])/g, "$1")
-    .replace(
-      /([{,]\s*)(summary|keyPoints|error|concept|explanation)\s*:/g,
-      '$1"$2":',
-    )
-    .replace(/'([^']*)'/g, '"$1"');
-};
-
 export const buildSummaryPrompt = (extractedText: string): string => {
   return `
 You are an intelligent study assistant for computer science students.
@@ -55,7 +46,9 @@ Your job is to analyze the content and return a structured JSON response.
 STRICT RULES:
 - Respond with valid JSON only. No extra text, no markdown, no code blocks.
 - The summary must be 3 to 5 sentences maximum — concise and academic in tone.
-- Each key point must have a clear concept title and a simple one to two sentence explanation.
+- Each key point must have a clear concept title and a short explanation (one to two sentences) followed by a concrete example.
+- Every explanation must include at least one concrete example illustrating the concept. If the concept is code-related, the example must be a short code snippet (not just a description), kept to a few lines at most.
+- Within the JSON string, write code examples on a single logical line using \\n for line breaks and escape any double quotes as \\". Do not use literal newlines inside the string value.
 - Use simple, student-friendly language. Avoid unnecessary jargon.
 - Extract between 3 and 8 key points depending on the richness of the content.
 - Do not fabricate information. Only use what is in the notes provided.
@@ -77,7 +70,6 @@ STUDENT NOTES:
 ${extractedText}
   `.trim();
 };
-
 export const generateSummary = async (
   req: Request<{ noteId: string }>,
   res: Response<GenerateSummaryResponse | ErrorResponse>,
@@ -182,19 +174,19 @@ export const generateSummary = async (
     };
 
     try {
-      parsed = JSON.parse(jsonText) as {
+      parsed = parseGeminiResponse<{
         summary?: string;
         keyPoints?: KeyPointPayload[];
         error?: string;
-      };
+      }>(jsonText);
     } catch (parseError) {
       try {
         const normalized = normalizeGeminiJson(jsonText);
-        parsed = JSON.parse(normalized) as {
+        parsed = parseGeminiResponse<{
           summary?: string;
           keyPoints?: KeyPointPayload[];
           error?: string;
-        };
+        }>(normalized);
       } catch (secondError) {
         console.error("Failed to parse Gemini JSON:", parseError, rawText);
         console.error("Failed after normalization:", secondError, jsonText);
