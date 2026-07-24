@@ -25,6 +25,7 @@ type GenerateSummaryResponse = {
   noteId: string;
   summary: string;
   keyPoints: KeyPointPayload[];
+  diagramSyntax: string;
 };
 
 type GeminiCandidate = {
@@ -51,6 +52,8 @@ STRICT RULES:
 - Within the JSON string, write code examples on a single logical line using \\n for line breaks and escape any double quotes as \\". Do not use literal newlines inside the string value.
 - Use simple, student-friendly language. Avoid unnecessary jargon.
 - Extract between 3 and 8 key points depending on the richness of the content.
+- Create a concise Mermaid flowchart showing the relationships among the extracted key points. Use only flowchart syntax beginning with "flowchart TD" and plain node labels. Do not use markdown code fences, Mermaid directives, styling, click handlers, or HTML.
+- The diagramSyntax value must be a valid JSON string. Represent line breaks with \\n, escape double quotes as \", and use short, stable node IDs such as A, B, and C.
 - Do not fabricate information. Only use what is in the notes provided.
 - If the content is not related to computer science, return this exact JSON:
   { "error": "Content does not appear to be computer science related." }
@@ -58,6 +61,7 @@ STRICT RULES:
 RESPONSE FORMAT:
 {
   "summary": "string",
+  "diagramSyntax": "flowchart TD\\n  A[Concept] --> B[Related concept]",
   "keyPoints": [
     {
       "concept": "string",
@@ -170,6 +174,7 @@ export const generateSummary = async (
     let parsed: {
       summary?: string;
       keyPoints?: KeyPointPayload[];
+      diagramSyntax?: string;
       error?: string;
     };
 
@@ -177,6 +182,7 @@ export const generateSummary = async (
       parsed = parseGeminiResponse<{
         summary?: string;
         keyPoints?: KeyPointPayload[];
+        diagramSyntax?: string;
         error?: string;
       }>(jsonText);
     } catch (parseError) {
@@ -185,6 +191,7 @@ export const generateSummary = async (
         parsed = parseGeminiResponse<{
           summary?: string;
           keyPoints?: KeyPointPayload[];
+          diagramSyntax?: string;
           error?: string;
         }>(normalized);
       } catch (secondError) {
@@ -198,7 +205,7 @@ export const generateSummary = async (
       return res.status(400).json({ error: parsed.error });
     }
 
-    if (!parsed.summary || !parsed.keyPoints?.length) {
+    if (!parsed.summary || !parsed.keyPoints?.length || !parsed.diagramSyntax) {
       return res
         .status(502)
         .json({ error: "Summary output missing required fields" });
@@ -206,6 +213,7 @@ export const generateSummary = async (
 
     const summary = parsed.summary;
     const keyPoints = parsed.keyPoints;
+    const diagramSyntax = parsed.diagramSyntax;
 
     const result = await prisma.$transaction(
       async (tx) => {
@@ -216,8 +224,8 @@ export const generateSummary = async (
 
         const analysis = await tx.noteAnalysis.upsert({
           where: { noteId },
-          update: { summary },
-          create: { noteId, summary },
+          update: { summary, diagramSyntax },
+          create: { noteId, summary, diagramSyntax },
         });
 
         await tx.keyPoint.deleteMany({ where: { analysisId: analysis.id } });
@@ -238,7 +246,12 @@ export const generateSummary = async (
       },
     );
 
-    return res.status(200).json({ noteId: result.noteId, summary, keyPoints });
+    return res.status(200).json({
+      noteId: result.noteId,
+      summary,
+      keyPoints,
+      diagramSyntax,
+    });
   } catch (error) {
     console.error("Error occurred while generating summary:", error);
     return res.status(500).json({ error: "Failed to generate summary" });
@@ -250,6 +263,7 @@ export const getSummaryByNoteId = async (
 ): Promise<{
   summary: string;
   keyPoints: KeyPointPayload[];
+  diagramSyntax: string | null;
   averageScore: number;
   quizAttempts: number;
 } | null> => {
@@ -257,6 +271,7 @@ export const getSummaryByNoteId = async (
     where: { noteId },
     select: {
       summary: true,
+      diagramSyntax: true,
       keyPoints: {
         select: {
           concept: true,
@@ -288,6 +303,7 @@ export const getSummaryByNoteId = async (
   return {
     summary: analysis.summary,
     keyPoints: analysis.keyPoints,
+    diagramSyntax: analysis.diagramSyntax,
     averageScore,
     quizAttempts,
   };

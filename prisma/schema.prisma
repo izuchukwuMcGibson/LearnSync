@@ -53,6 +53,7 @@ model NoteAnalysis {
   noteId    String     @unique
   note      Note       @relation(fields: [noteId], references: [id], onDelete: Cascade)
   summary   String
+  diagramSyntax String?
   isRead    Boolean    @default(false)
   createdAt DateTime   @default(now())
   keyPoints KeyPoint[]

@@ -19,7 +19,7 @@ export const normalizeGeminiJson = (input: string): string => {
   return input
     .replace(/,\s*(\}|\])/g, "$1")
     .replace(
-      /([{,]\s*)(summary|keyPoints|error|concept|explanation|difficulty|questions|id|type|question|options|correctAnswer|starterCode|testCode|language|expectedOutput)\s*:/g,
+      /([{,]\s*)(summary|keyPoints|diagramSyntax|error|concept|explanation|difficulty|questions|id|type|question|options|correctAnswer|starterCode|testCode|language|expectedOutput)\s*:/g,
       '$1"$2":',
     )
     .replace(/'([^']*)'/g, '"$1"');
