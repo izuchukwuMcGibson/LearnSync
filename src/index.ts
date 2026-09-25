@@ -14,6 +14,7 @@ const app: Express = express();
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
+  "https://learn-sync-frontend-coral.vercel.app",
   "https://learn-sync-frontend-coral.vercel.app", // Example local frontend (Vite)
   process.env.FRONTEND_URL || "", // Add your production URL to your .env
 ].filter(Boolean);
